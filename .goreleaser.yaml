@@ -1,0 +1,30 @@
+# File: .goreleaser.yaml
+# Description: Minimal GoReleaser config for pkglist's release job (see
+#   .github/workflows/ci.yml), which only runs on "v*" tag pushes. The
+#   binary's main package lives under cmd/pkglist rather than the repo
+#   root, so that path is set explicitly.
+# Date: 2026-10-17
+
+version: 2
+
+builds:
+  - id: pkglist
+    main: ./cmd/pkglist
+    binary: pkglist
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - id: pkglist
+    formats: [tar.gz]
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc

@@ -1,0 +1,13 @@
+# File: .gitignore
+# Description: Build artifacts to keep out of version control for pkglist.
+# Date: 2026-10-17
+
+# compiled binary (go build -o pkglist ./cmd/pkglist)
+/pkglist
+
+# GoReleaser local output (see .goreleaser.yaml)
+/dist/
+
+# go test artifacts
+*.test
+*.out

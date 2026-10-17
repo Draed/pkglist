@@ -1,0 +1,19 @@
+#compdef pkglist
+# File: completions/_pkglist
+# Description: Zsh completion for pkglist. Completes -p/--provider with
+#   the package providers actually detected as installed on this system
+#   (via `pkglist --providers`), including comma-separated lists.
+# Date: 2026-10-17
+
+_pkglist_providers() {
+    local -a providers
+    providers=(${(f)"$(command pkglist --providers 2>/dev/null)"})
+    _values -s , 'provider' ${providers}
+}
+
+_arguments \
+    '(-v --verbose)'{-v,--verbose}'[human-readable ASCII table instead of JSON]' \
+    '(-p --provider)'{-p,--provider}'[comma-separated providers to query]:providers:_pkglist_providers' \
+    '--list-providers[list known providers and whether they are detected]' \
+    '--providers[print only detected provider names, one per line]' \
+    '(-h --help)'{-h,--help}'[show usage and exit]'

@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -143,6 +144,14 @@ func (b *limitedBuffer) Write(p []byte) (int, error) {
 // uncooperative binary should never fail the whole provider, and its
 // error/usage text (e.g. "unknown long flag '--version'") is never a
 // package version, so it must never be shown as one.
+//
+// Binaries dropped into /usr/local/bin or ~/.local/bin are not guaranteed
+// to treat --version as a no-op flag: a personal script or wrapper may not
+// recognize it and fall through to its normal interactive behavior (e.g.
+// launching a GUI/TUI prompt). The probe therefore runs the candidate in
+// its own session (Setsid) so it has no controlling terminal to manipulate,
+// and on timeout kills the whole process group, not just the direct child,
+// so a GUI/TUI process it spawned cannot survive as an orphan.
 func probeVersion(parent context.Context, path string) string {
 	ctx, cancel := context.WithTimeout(parent, perBinaryVersionTimeout)
 	defer cancel()
@@ -152,6 +161,10 @@ func probeVersion(parent context.Context, path string) string {
 	cmd.Stdout = out
 	cmd.Stderr = out
 	cmd.Stdin = nil
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	cmd.Cancel = func() error {
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
 
 	if err := cmd.Run(); err != nil {
 		return "unknown"

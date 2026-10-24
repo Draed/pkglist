@@ -15,3 +15,11 @@ Date: 2026-10-17
   4096-byte output cap, since it is the only provider that executes
   binaries it did not choose (apt/pipx/mise/go/uv/flatpak are all
   well-known, trusted package manager CLIs).
+- A binary dropped into /usr/local/bin or ~/.local/bin is not guaranteed to
+  treat `--version` as inert: a personal script may not recognize the flag
+  and fall through to its normal interactive behavior (e.g. launching a
+  GUI/TUI prompt). Each `--version` probe therefore runs in its own
+  session (`Setsid`), so it has no controlling terminal to put into raw
+  mode, and on timeout the whole process group is killed, not just the
+  direct child, so a GUI/TUI process it spawned cannot survive as an
+  orphan.

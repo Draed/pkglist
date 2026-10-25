@@ -3,7 +3,7 @@
 #   .github/workflows/ci.yml), which only runs on "v*" tag pushes. The
 #   binary's main package lives under cmd/pkglist rather than the repo
 #   root, so that path is set explicitly.
-# Date: 2026-10-17
+# Date: 2026-10-25
 
 version: 2
 
@@ -18,6 +18,9 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
+    # {{.Tag}} (not {{.Version}}) - {{.Version}} would strip the "v".
+    ldflags:
+      - -s -w -X main.version={{.Tag}}
 
 archives:
   - id: pkglist

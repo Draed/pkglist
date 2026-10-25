@@ -59,6 +59,7 @@ Flags:
       --providers        print only the detected provider names, one per line
       --color            force colored --verbose output, even when stdout is not a terminal
       --no-color         disable colored --verbose output
+  -V, --version          print version information and exit
   -h, --help             show usage text and exit
 ```
 
@@ -119,6 +120,17 @@ Total: 3 package(s)
 
 See [--verbose color and width rules](docs/verbose-output.md) for exactly
 how color and terminal-width truncation are applied.
+
+### Version
+
+```sh
+pkglist --version
+```
+
+Prints `pkglist <tag>`, e.g. `pkglist v1.0.2`. The version string is
+injected at build time via `-ldflags "-X main.version=<tag>"` (see
+`.goreleaser.yaml`); a plain `go build -o pkglist ./cmd/pkglist` with no
+ldflags prints `pkglist dev` instead.
 
 ### Exit codes
 

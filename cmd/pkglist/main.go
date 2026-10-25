@@ -26,9 +26,15 @@ func main() {
 		help            bool
 		noColor         bool
 		forceColor      bool
+		showVersion     bool
 	)
 
-	parseFlags(&verbose, &providerFlag, &listProviders, &printProviderID, &help, &noColor, &forceColor)
+	parseFlags(&verbose, &providerFlag, &listProviders, &printProviderID, &help, &noColor, &forceColor, &showVersion)
+
+	if showVersion {
+		fmt.Println("pkglist " + version)
+		return
+	}
 
 	if help {
 		printUsage(os.Stdout)
@@ -87,6 +93,7 @@ Flags:
                           (used by shell completion/scripting), then exit
       --color            force colored --verbose output, even when stdout is not a terminal
       --no-color         disable colored --verbose output
+  -V, --version          print version information and exit
   -h, --help             show this usage text and exit
 
 Shell completion:

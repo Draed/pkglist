@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func parseFlags(verbose *bool, providerFlag *string, listProviders, printProviderID, help, noColor, forceColor *bool) {
+func parseFlags(verbose *bool, providerFlag *string, listProviders, printProviderID, help, noColor, forceColor, showVersion *bool) {
 	flag.BoolVar(verbose, "verbose", false, "human-readable ASCII table instead of JSON")
 	flag.BoolVar(verbose, "v", false, "shorthand for --verbose")
 	flag.StringVar(providerFlag, "provider", "", "comma-separated providers to query (default: all detected)")
@@ -20,6 +20,9 @@ func parseFlags(verbose *bool, providerFlag *string, listProviders, printProvide
 	flag.BoolVar(forceColor, "color", false, "force colored --verbose output even when stdout is not a terminal")
 	flag.BoolVar(help, "help", false, "show usage and exit")
 	flag.BoolVar(help, "h", false, "shorthand for --help")
+	// "V" (uppercase), not "v": "v" is already --verbose's shorthand
+	flag.BoolVar(showVersion, "version", false, "print version information and exit")
+	flag.BoolVar(showVersion, "V", false, "shorthand for --version")
 	flag.Usage = func() { printUsage(os.Stderr) }
 	flag.Parse()
 }

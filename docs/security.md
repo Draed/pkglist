@@ -23,3 +23,10 @@ Date: 2026-10-17
   mode, and on timeout the whole process group is killed, not just the
   direct child, so a GUI/TUI process it spawned cannot survive as an
   orphan.
+- `Setsid` only blocks terminal-based side effects. A probed binary that
+  falls back to a GUI dialog instead needs no controlling terminal at all -
+  it reaches a window purely through the display server socket. Each probe
+  therefore also strips `DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY`,
+  `XDG_RUNTIME_DIR` and `DBUS_SESSION_BUS_ADDRESS` from its environment, so
+  an X11/Wayland client library cannot connect to a compositor and simply
+  fails instead of drawing anything.

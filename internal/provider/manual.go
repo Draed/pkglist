@@ -150,8 +150,10 @@ func (b *limitedBuffer) Write(p []byte) (int, error) {
 // recognize it and fall through to its normal interactive behavior (e.g.
 // launching a GUI/TUI prompt). The probe therefore runs the candidate in
 // its own session (Setsid) so it has no controlling terminal to manipulate,
-// and on timeout kills the whole process group, not just the direct child,
-// so a GUI/TUI process it spawned cannot survive as an orphan.
+// with the display-server environment variables stripped so a GUI toolkit
+// cannot reach a compositor/X server to draw a window either, and on
+// timeout kills the whole process group, not just the direct child, so
+// anything it spawned cannot survive as an orphan.
 func probeVersion(parent context.Context, path string) string {
 	ctx, cancel := context.WithTimeout(parent, perBinaryVersionTimeout)
 	defer cancel()
@@ -161,6 +163,7 @@ func probeVersion(parent context.Context, path string) string {
 	cmd.Stdout = out
 	cmd.Stderr = out
 	cmd.Stdin = nil
+	cmd.Env = stripDisplayEnv(os.Environ())
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	cmd.Cancel = func() error {
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
@@ -180,6 +183,40 @@ func probeVersion(parent context.Context, path string) string {
 		firstLine = firstLine[:maxVersionLen]
 	}
 	return firstLine
+}
+
+// displayEnvVars are the environment variables an X11 or Wayland client
+// needs to connect to a running display server. Stripping them from a
+// --version probe's environment means a GUI toolkit a probed binary links
+// against cannot reach a compositor/X server, so it fails to connect and
+// exits instead of drawing a window - the same outcome as any other
+// unrecognized-flag failure.
+var displayEnvVars = []string{
+	"DISPLAY",
+	"WAYLAND_DISPLAY",
+	"XAUTHORITY",
+	"XDG_RUNTIME_DIR",
+	"DBUS_SESSION_BUS_ADDRESS",
+}
+
+// stripDisplayEnv returns env with every entry whose key is in
+// displayEnvVars removed, leaving the rest untouched.
+func stripDisplayEnv(env []string) []string {
+	filtered := make([]string, 0, len(env))
+	for _, kv := range env {
+		key, _, _ := strings.Cut(kv, "=")
+		blocked := false
+		for _, name := range displayEnvVars {
+			if key == name {
+				blocked = true
+				break
+			}
+		}
+		if !blocked {
+			filtered = append(filtered, kv)
+		}
+	}
+	return filtered
 }
 
 // looksLikeVersion reports whether a --version probe's first output line is

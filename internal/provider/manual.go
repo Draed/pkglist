@@ -172,7 +172,7 @@ func probeVersion(parent context.Context, path string) string {
 
 	firstLine, _, _ := strings.Cut(out.buf.String(), "\n")
 	firstLine = strings.TrimSpace(firstLine)
-	if firstLine == "" {
+	if !looksLikeVersion(firstLine) {
 		return "unknown"
 	}
 	const maxVersionLen = 200
@@ -180,4 +180,40 @@ func probeVersion(parent context.Context, path string) string {
 		firstLine = firstLine[:maxVersionLen]
 	}
 	return firstLine
+}
+
+// looksLikeVersion reports whether a --version probe's first output line is
+// plausible as an actual version string, rather than some other kind of
+// output produced by a script/binary that does not understand --version at
+// all and ignores it, falling through to its normal behavior instead of
+// erroring (e.g. mako-notifications-status, a waybar status script dropped
+// into ~/.local/bin that does not parse its arguments and always prints its
+// own JSON status line - {"text": "...", "class": "empty", ...} - which
+// exits 0 just like a real --version flag would, so the exit-code check
+// above alone cannot catch it). A real --version line is never JSON/XML and
+// never a "this flag is not recognized" usage/error message.
+func looksLikeVersion(s string) bool {
+	if s == "" {
+		return false
+	}
+	switch s[0] {
+	case '{', '[', '<', '"', '\'':
+		return false
+	}
+	lower := strings.ToLower(s)
+	for _, marker := range []string{
+		"usage:", "usage ",
+		"unknown option", "unrecognized option", "invalid option",
+		"unknown flag", "unrecognized flag",
+	} {
+		if strings.Contains(lower, marker) {
+			return false
+		}
+	}
+	for _, r := range s {
+		if r < 0x20 && r != '\t' {
+			return false
+		}
+	}
+	return true
 }
